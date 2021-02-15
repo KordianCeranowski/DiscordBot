@@ -1,4 +1,4 @@
-import Drawer
+import Painter
 import discord
 import requests
 from random import random
@@ -48,14 +48,12 @@ async def on_message(message):
         return
 
     if message.content == '!jp2':
-        await message.channel.send(
-            """
-            1. !e and image\t-> Prints image as emojis in size 20 x 20\n
-            2. !e 30 30\t\t-> Prints image as emojis in size 30 x 30\n
-            3. !e 30 \t\t-> Prints image as emojis with width of 30 keeping proportions\n
+        await message.channel.send("""
+            1. !e and image -> Prints image as emojis in size 20 x 20
+            2. !e 30 30     -> Prints image as emojis in size 30 x 30
+            3. !e 30        -> Prints image as emojis with width of 30 keeping proportions
             4. dont send me jpegs
-            """
-        )
+            """)
         return
 
     if message.content.startswith('!e'):
@@ -63,9 +61,9 @@ async def on_message(message):
             await message.channel.send('No attachment found!')
             return
 
-        shape = tuple([int(x) for x in message.content[2:].split()])
+        shape = [int(x) for x in message.content[2:].split()]
         if len(shape) == 0:
-            shape = tuple([20])
+            shape = [20]
         if len(shape) > 2 or type(shape[0]) != int:
             await message.channel.send('Wrong dimensions!')
             return
@@ -73,8 +71,9 @@ async def on_message(message):
         url = message.attachments[0].url
         download(url)
 
+        messages = Painter.encode_image(IMG_NAME, shape)
         try:
-            messages = Drawer.encode_image(IMG_NAME, shape)
+            messages = Painter.encode_image(IMG_NAME, shape)
         except:
             await message.channel.send('Error occured while processing image')
             if url.endswith('.jpg') or url.endswith('.jpeg'):
