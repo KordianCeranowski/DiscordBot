@@ -1,7 +1,6 @@
 from PIL import Image
 from collections import defaultdict
 import numpy as np
-from math import inf
 
 
 def generate_palette():
@@ -24,8 +23,9 @@ def generate_palette():
 
 def image_needs_prefix(image):
     counter = 0
+    max_signs_in_message = 2000
     for row in image:
-        if counter + len(row) + 2 > 2000:
+        if counter + len(row) + 2 > max_signs_in_message:
             if row[0] == ' ':
                 return True
             counter = 0
@@ -46,11 +46,7 @@ def divide_into_pasteable_pieces(image):
 def read_png(filename):
     im = Image.open(filename)
     pix = im.load()
-    img = []
-    for i in range(im.size[1]):
-        img.append([])
-        for j in range(im.size[0]):
-            img[i].append(list(pix[j, i]))
+    img = [[pix[row, col] for row in range(im.size[0])] for col in range(im.size[1])]
     return np.array(img)
 
 
@@ -77,12 +73,6 @@ def scale_down(array, shape):
 
 
 def find_closest_color(palette, color):
-    # difference = inf
-    # closest = None
-    # for rgba in palette:
-    #     if np.linalg.norm(color - np.array(rgba)) < difference:
-    #         closest = np.array(rgba)
-    #         difference = np.linalg.norm(color - np.array(rgba))
     differences = [np.linalg.norm(color - np.array(rgba)) for rgba in palette]
     closest_index = int(np.argmin(differences))
     closest_rgba = list(palette.keys())[closest_index]
