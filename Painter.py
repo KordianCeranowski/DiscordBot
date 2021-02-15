@@ -4,10 +4,6 @@ import numpy as np
 from math import inf
 
 
-def arr_to_tuple(array):
-    return tuple(array.flatten())
-
-
 def generate_palette():
     disco_colors = [':blue_square:',
                     ':orange_square:',
@@ -22,7 +18,7 @@ def generate_palette():
     palette_png = read_png('palette.png')
     palette = defaultdict(lambda: ':question:')
     for i, color in enumerate(palette_png[0]):
-        palette[arr_to_tuple(color)] = disco_colors[i]
+        palette[tuple(color)] = disco_colors[i]
     return palette
 
 
@@ -81,20 +77,23 @@ def scale_down(array, shape):
 
 
 def find_closest_color(palette, color):
-    difference = inf
-    closest = None
-    for rgba in palette:
-        if np.linalg.norm(color - np.array(rgba)) < difference:
-            closest = np.array(rgba)
-            difference = np.linalg.norm(color - np.array(rgba))
-    return closest
+    # difference = inf
+    # closest = None
+    # for rgba in palette:
+    #     if np.linalg.norm(color - np.array(rgba)) < difference:
+    #         closest = np.array(rgba)
+    #         difference = np.linalg.norm(color - np.array(rgba))
+    differences = [np.linalg.norm(color - np.array(rgba)) for rgba in palette]
+    closest_index = int(np.argmin(differences))
+    closest_rgba = list(palette.keys())[closest_index]
+    return closest_rgba
 
 
 def normalize(array, palette):
-    array = array.reshape((-1, array.shape[-1]))
-    for i, rgba in enumerate(array):
-        array[i] = find_closest_color(palette, rgba)
-    return array.reshape(array.shape)
+    original_shape = array.shape
+    array = array.reshape((-1, original_shape[-1]))
+    array = np.array([find_closest_color(palette, rgba) for rgba in array])
+    return array.reshape(original_shape)
 
 
 static_palette = generate_palette()
@@ -110,5 +109,5 @@ def encode_image(filename, shape):
     for row in range(image_small.shape[0]):
         encoded_image.append('')
         for col in range(image_small.shape[1]):
-            encoded_image[row] += static_palette[arr_to_tuple(image_small[row][col])]
+            encoded_image[row] += static_palette[tuple(image_small[row][col])]
     return divide_into_pasteable_pieces(encoded_image)
