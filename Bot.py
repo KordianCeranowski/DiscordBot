@@ -1,13 +1,16 @@
 import Painter
 import discord
 import requests
-from random import random
-import time
-from discord import ChannelType
-import copy
+
 
 client = discord.Client()
 IMG_NAME = 'temp.png'
+
+
+def download(url):
+    r = requests.get(url)
+    with open(IMG_NAME, 'wb') as outfile:
+        outfile.write(r.content)
 
 
 @client.event
@@ -47,12 +50,12 @@ async def on_message(message):
                 await mess.delete()
         return
 
-    if message.content == '!jp2':
+    if message.content == '!help':
         await message.channel.send("""
             1. !e and image -> Prints image as emojis in size 20 x 20
             2. !e 30 30     -> Prints image as emojis in size 30 x 30
             3. !e 30        -> Prints image as emojis with width of 30 keeping proportions
-            4. dont send me jpegs
+            4. Dont send me jpegs
             """)
         return
 
@@ -71,7 +74,6 @@ async def on_message(message):
         url = message.attachments[0].url
         download(url)
 
-        messages = Painter.encode_image(IMG_NAME, shape)
         try:
             messages = Painter.encode_image(IMG_NAME, shape)
         except:
@@ -84,10 +86,7 @@ async def on_message(message):
             await message.channel.send(mess)
 
 
-def download(url):
-    r = requests.get(url)
-    with open(IMG_NAME, 'wb') as outfile:
-        outfile.write(r.content)
+
 
 
 discord_id = open("discord_id.txt", "r").read()
