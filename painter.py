@@ -2,6 +2,8 @@ from PIL import Image
 from collections import defaultdict
 import numpy as np
 
+PALETTE_PATH = 'resources/palette.png'
+
 
 def generate_palette():
     disco_colors = [':blue_square:',
@@ -14,7 +16,7 @@ def generate_palette():
                     ':purple_square:',
                     ':red_square:',
                     '      ']
-    palette_png = read_png('palette.png')
+    palette_png = read_png(PALETTE_PATH)
     palette = defaultdict(lambda: ':question:')
     for i, color in enumerate(palette_png[0]):
         palette[tuple(color)] = disco_colors[i]

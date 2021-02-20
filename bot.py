@@ -1,22 +1,17 @@
-import Painter
+import painter
 import discord
 import requests
 import w2g
+from time import localtime
 
-
+IMG_NAME = 'resources/temp.png'
 client = discord.Client()
-IMG_NAME = 'temp.png'
 
 
 def download(url):
     r = requests.get(url)
     with open(IMG_NAME, 'wb') as outfile:
         outfile.write(r.content)
-
-
-@client.event
-async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
 
 
 async def cleanup_messages(message, key):
@@ -50,9 +45,9 @@ async def turn_image_to_emojis(message, key):
         await message.channel.send('Please do not send .jpg or .jpeg files')
         return
 
-    download(url)
     try:
-        image_parts = Painter.encode_image(IMG_NAME, shape)
+        download(url)
+        image_parts = painter.encode_image(IMG_NAME, shape)
         for mess in image_parts:
             await message.channel.send(mess)
     except:
@@ -61,10 +56,16 @@ async def turn_image_to_emojis(message, key):
 
 async def generate_w2g_room(message, key):
     try:
-        link = message.content[len(key):]
+        link = message.content[len(key)+1:]
+        print(link)
         await w2g.run(link, message.channel)
     except:
         await message.channel.send('Error occured, try again')
+
+
+@client.event
+async def on_ready():
+    print('We have logged in as {0.user}'.format(client))
 
 
 @client.event
@@ -78,8 +79,12 @@ async def on_message(message):
 
     for command in options:
         if message.content.startswith(command):
+            t = localtime()
+            just = lambda x: str(x).rjust(2, '0')
+            print(f"[{just(t.tm_hour)}:{just(t.tm_min)}:{just(t.tm_sec)}]: {command}")
             await options[command](message, command)
 
 
-discord_id = open("discord_id.txt", "r").read()
-client.run(discord_id)
+if __name__ == "__main__":
+    discord_id = open("discord_id.txt", "r").read()
+    client.run(discord_id)

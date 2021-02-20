@@ -8,11 +8,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
-from time import time
 import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-path_to_extension = f'{dir_path}\\adblock'
+ADBLOCK_PATH = f'{dir_path}\\resources\\adblock'
 
 
 def wait_for(by: By, value: str, driver: WebDriver) -> WebElement:
@@ -21,7 +20,7 @@ def wait_for(by: By, value: str, driver: WebDriver) -> WebElement:
 
 def setup_driver():
     options = Options()
-    options.add_argument('load-extension=' + path_to_extension)
+    options.add_argument('load-extension=' + ADBLOCK_PATH)
     options.add_argument("--headless")
     options.add_argument("--mute-audio")
     driver = webdriver.Chrome(options=options)
@@ -105,9 +104,3 @@ def get_video_link_from_cda(video_link: str, driver: WebDriver):
 async def run(link: str, channel):
     chromedriver = setup_driver()
     await create_room(link, chromedriver, channel)
-
-
-if __name__ == "__main__":
-    yt_link = 'https://www.youtube.com/watch?v=DLzxrzFCyOs'
-    cda_link = 'https://www.cda.pl/video/67833141f'
-    run(cda_link)
