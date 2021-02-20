@@ -1,6 +1,7 @@
 import Painter
 import discord
 import requests
+import w2g
 
 
 client = discord.Client()
@@ -20,28 +21,6 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.content.startswith('!xd'):
-        await message.channel.send('Dość!')
-        # number = message.content.split(' ')[-1]
-        # number = int(number) if number.isnumeric() else 5
-
-        # mention = message.mentions[0]
-        # voice_channels = [c for c in message.channel.guild.voice_channels]
-        # origin_channel = [c for c in voice_channels if c.id == mention.voice.channel.id][0]
-        # # origin_channel = next(filter(lambda c: c.id == mention.voice.channel.id, voice_channels))
-        # if not mention.voice or not mention.voice.channel:
-        #     await message.channel.send(f"{str(mention)} is not connected to a voice channel")
-        #     return
-        # start_time = time.time()
-        # await mention.move_to(voice_channels[-2])
-        # while time.time() - start_time < number:
-        #     for i in range(1, 3):
-        #         time.sleep(0.5)
-        #         if mention.voice.channel is origin_channel:
-        #             break
-        #         await mention.move_to(voice_channels[-i])
-        # await mention.move_to(origin_channel)
-        return
 
     if message.content == '!nuke':
         messages = await message.channel.history(limit=1000).flatten()
@@ -85,8 +64,12 @@ async def on_message(message):
         for mess in messages:
             await message.channel.send(mess)
 
-
-
+    if message.content.startswith('w2g'):
+        try:
+            link = message.content[4:]
+            await w2g.run(link, message.channel)
+        except:
+            await message.channel.send('Error occured, try again')
 
 
 discord_id = open("discord_id.txt", "r").read()
