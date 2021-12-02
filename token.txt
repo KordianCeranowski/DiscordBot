@@ -1,0 +1,2 @@
+Paste your Discord bot token here :)
+https://discord.com/developers/applications/
