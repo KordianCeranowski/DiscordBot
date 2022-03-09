@@ -99,7 +99,11 @@ async def play(message, arguments):
                     bot_voice_channel.play(discord.FFmpegPCMAudio("resources/sound/" + sound["filename"]), after=lambda e: print('done', e))
                     break
         
-    
+async def show_aliases(message, arguments):
+    with open('resources/aliases.json', 'r') as file:
+        data = json.load(file)
+        await message.channel.send(str(set([sound['alias'] for sound in data])))
+            
 
 @client.event
 async def on_ready():
@@ -114,7 +118,8 @@ async def on_message(message):
         '$e': turn_image_to_emojis,
         '$subs': get_subtitles,
         '$play': play,
-        '$record_alias': record_alias
+        '$record_alias': record_alias,
+        '$show_aliases': show_aliases
     }
 
     for command in options:
