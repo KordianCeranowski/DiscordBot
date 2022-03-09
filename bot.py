@@ -10,7 +10,7 @@ IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
 client = discord.Client()
 
 
-async def send_help(message, key):
+async def send_help(message, arguments):
     await message.channel.send(
         "```yml\n" + 
         "\n".join([
@@ -24,14 +24,14 @@ async def send_help(message, key):
     )
 
 
-async def cleanup_messages(message, key):
+async def cleanup_messages(message, arguments):
     messages = await message.channel.history(limit=1000).flatten()
     for mess in messages:
         if str(mess.author.name) == str(client.user)[:-5]:
             await mess.delete()
 
 
-async def turn_image_to_emojis(message, key):
+async def turn_image_to_emojis(message, arguments):
     def download(url):
         r = requests.get(url)
         with open(IMG_NAME, 'wb') as outfile:
@@ -40,7 +40,7 @@ async def turn_image_to_emojis(message, key):
     if not message.attachments:
         await message.channel.send('No attachment found!')
         return
-    shape = [int(x) for x in message.content[len(key):].split()]
+    shape = [int(x) for x in arguments]
     if len(shape) == 0:
         shape = [30]
     if len(shape) > 2:
@@ -60,15 +60,15 @@ async def turn_image_to_emojis(message, key):
         await message.channel.send('Error occured while processing image')
 
 
-async def get_subtitles(message, key):
-    video_name = message.content[len(key)+1:]
+async def get_subtitles(message, arguments):
+    video_name = arguments[0]
     try:
         lyrics_link = opensubtitles.get_subtitles(video_name)
         await message.channel.send(lyrics_link)
     except:
         await message.channel.send('Error occured')
 
-async def record_alias(message, key):
+async def record_alias(message, arguments):
     def download(url):
         r = requests.get(url)
         filename = url.split('/')[-1].lower()
@@ -76,7 +76,7 @@ async def record_alias(message, key):
             outfile.write(r.content)
         return filename
 
-    alias, link = message.content[len(key)+1:].split()
+    alias, link = arguments
     with open('resources/aliases.json', 'r+') as file:
         data = json.load(file)
         filename = download(link)
@@ -85,14 +85,14 @@ async def record_alias(message, key):
         json.dump(data, file, indent=4)
 
 
-async def play(message, key):
+async def play(message, arguments):
     user_voice_channel = message.author.voice.channel
     bot_voice_channel = discord.utils.get(client.voice_clients, guild=message.guild)
     if user_voice_channel != None:
         if bot_voice_channel == None:
             bot_voice_channel = await user_voice_channel.connect()
         with open('resources/aliases.json', 'r') as file:
-            alias = message.content[len(key)+1:]
+            alias = arguments[0]
             data = json.load(file)
             for sound in data:
                 if sound["alias"] == alias:
@@ -119,10 +119,11 @@ async def on_message(message):
 
     for command in options:
         if message.content.startswith(command) and message.author != client.user:
+            arguments = message.content[len(command)+1:].split()
             t = localtime()
             just = lambda x: str(x).rjust(2, '0')
-            print(f"[{just(t.tm_hour)}:{just(t.tm_min)}:{just(t.tm_sec)}]: {command}")
-            await options[command](message, command)
+            print(f"[{just(t.tm_hour)}:{just(t.tm_min)}:{just(t.tm_sec)}]: {command}: {arguments}")
+            await options[command](message, arguments)
 
 
 if __name__ == "__main__":
