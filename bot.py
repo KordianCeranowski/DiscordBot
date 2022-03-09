@@ -4,6 +4,7 @@ import requests
 from time import localtime
 import opensubtitles
 import asyncio
+import json
 
 IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
 client = discord.Client()
@@ -67,14 +68,38 @@ async def get_subtitles(message, key):
     except:
         await message.channel.send('Error occured')
 
+async def record_alias(message, key):
+    def download(url):
+        r = requests.get(url)
+        filename = url.split('/')[-1].lower()
+        with open("resources/sound/" + filename, 'wb') as outfile:
+            outfile.write(r.content)
+        return filename
+
+    alias, link = message.content[len(key)+1:].split()
+    with open('resources/aliases.json', 'r+') as file:
+        data = json.load(file)
+        filename = download(link)
+        data += [{"alias": alias, "filename": filename, "link": link}]
+        file.seek(0)
+        json.dump(data, file, indent=4)
+
+
 async def play(message, key):
     user_voice_channel = message.author.voice.channel
     bot_voice_channel = discord.utils.get(client.voice_clients, guild=message.guild)
     if user_voice_channel != None:
         if bot_voice_channel == None:
             bot_voice_channel = await user_voice_channel.connect()
-        bot_voice_channel.play(discord.FFmpegPCMAudio('sound.mp3'), after=lambda e: print('done', e))
-
+        with open('resources/aliases.json', 'r') as file:
+            alias = message.content[len(key)+1:]
+            data = json.load(file)
+            for sound in data:
+                if sound["alias"] == alias:
+                    bot_voice_channel.play(discord.FFmpegPCMAudio("resources/sound/" + sound["filename"]), after=lambda e: print('done', e))
+                    break
+        
+    
 
 @client.event
 async def on_ready():
@@ -88,7 +113,8 @@ async def on_message(message):
         '$help': send_help,
         '$e': turn_image_to_emojis,
         '$subs': get_subtitles,
-        '$play': play
+        '$play': play,
+        '$record_alias': record_alias
     }
 
     for command in options:
