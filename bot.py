@@ -3,8 +3,9 @@ import discord
 import requests
 from time import localtime
 import opensubtitles
+import asyncio
 
-IMG_NAME = 'resources/temp.png'
+IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
 client = discord.Client()
 
 
@@ -12,10 +13,11 @@ async def send_help(message, key):
     await message.channel.send(
         "```yml\n" + 
         "\n".join([
-            "!help: send_help",
-            "!e: turn_image_to_emojis",
-            "!subs: get_subtitles",
-            "!nuke: cleanup_messages"
+            "$help: send_help",
+            "$e: turn_image_to_emojis",
+            "$subs: get_subtitles",
+            "$nuke: cleanup_messages",
+            "$play: join voice and play sound"
         ])
         + "```"
     )
@@ -65,6 +67,13 @@ async def get_subtitles(message, key):
     except:
         await message.channel.send('Error occured')
 
+async def play(message, key):
+    user_voice_channel = message.author.voice.channel
+    bot_voice_channel = discord.utils.get(client.voice_clients, guild=message.guild)
+    if user_voice_channel != None:
+        if bot_voice_channel == None:
+            bot_voice_channel = await user_voice_channel.connect()
+        bot_voice_channel.play(discord.FFmpegPCMAudio('sound.mp3'), after=lambda e: print('done', e))
 
 
 @client.event
@@ -75,10 +84,11 @@ async def on_ready():
 @client.event
 async def on_message(message):
     options = {
-        '!nuke': cleanup_messages,
-        '!help': send_help,
-        '!e': turn_image_to_emojis,
-        '!subs': get_subtitles
+        '$nuke': cleanup_messages,
+        '$help': send_help,
+        '$e': turn_image_to_emojis,
+        '$subs': get_subtitles,
+        '$play': play
     }
 
     for command in options:
