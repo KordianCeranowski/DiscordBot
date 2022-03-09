@@ -5,33 +5,31 @@ from time import localtime
 import opensubtitles
 import asyncio
 import json
+import functools
+
 
 IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
 client = discord.Client()
 
-
-async def send_help(message, arguments):
-    await message.channel.send(
-        "```yml\n" + 
-        "\n".join([
-            "$help: send_help",
-            "$e: turn_image_to_emojis",
-            "$subs: get_subtitles",
-            "$nuke: cleanup_messages",
-            "$play: join voice and play sound"
-        ])
-        + "```"
-    )
+options = {}
+register_option = lambda f: options.setdefault("$" + f.__name__, f)
 
 
-async def cleanup_messages(message, arguments):
+@register_option
+async def help(message, arguments):
+    await message.channel.send(f"```yml\n{ list(options.keys()) }```")
+
+
+@register_option
+async def cleanup(message, arguments):
     messages = await message.channel.history(limit=1000).flatten()
     for mess in messages:
         if str(mess.author.name) == str(client.user)[:-5]:
             await mess.delete()
 
 
-async def turn_image_to_emojis(message, arguments):
+@register_option
+async def turn_to_emojis(message, arguments):
     def download(url):
         r = requests.get(url)
         with open(IMG_NAME, 'wb') as outfile:
@@ -60,6 +58,7 @@ async def turn_image_to_emojis(message, arguments):
         await message.channel.send('Error occured while processing image')
 
 
+@register_option
 async def get_subtitles(message, arguments):
     video_name = arguments[0]
     try:
@@ -68,6 +67,8 @@ async def get_subtitles(message, arguments):
     except:
         await message.channel.send('Error occured')
 
+
+@register_option
 async def record_alias(message, arguments):
     def download(url):
         r = requests.get(url)
@@ -85,6 +86,7 @@ async def record_alias(message, arguments):
         json.dump(data, file, indent=4)
 
 
+@register_option
 async def play(message, arguments):
     user_voice_channel = message.author.voice.channel
     bot_voice_channel = discord.utils.get(client.voice_clients, guild=message.guild)
@@ -98,7 +100,9 @@ async def play(message, arguments):
                 if sound["alias"] == alias:
                     bot_voice_channel.play(discord.FFmpegPCMAudio("resources/sound/" + sound["filename"]), after=lambda e: print('done', e))
                     break
-        
+
+
+@register_option
 async def show_aliases(message, arguments):
     with open('resources/aliases.json', 'r') as file:
         data = json.load(file)
@@ -112,16 +116,6 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    options = {
-        '$nuke': cleanup_messages,
-        '$help': send_help,
-        '$e': turn_image_to_emojis,
-        '$subs': get_subtitles,
-        '$play': play,
-        '$record_alias': record_alias,
-        '$show_aliases': show_aliases
-    }
-
     for command in options:
         if message.content.startswith(command) and message.author != client.user:
             arguments = message.content[len(command)+1:].split()
