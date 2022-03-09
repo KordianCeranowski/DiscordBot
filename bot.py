@@ -15,9 +15,13 @@ options = {}
 register_option = lambda f: options.setdefault("$" + f.__name__, f)
 
 
+async def send_yellow(channel, text):
+    await channel.send(f"```fix\n{ text }```")
+
+
 @register_option
 async def help(message, arguments):
-    await message.channel.send(f"```yml\n{ list(options.keys()) }```")
+    await send_yellow(message.channel, list(options.keys()))
 
 
 @register_option
@@ -36,17 +40,17 @@ async def turn_to_emojis(message, arguments):
             outfile.write(r.content)
 
     if not message.attachments:
-        await message.channel.send('No attachment found!')
+        await send_yellow(message.channel, 'No attachment found!')
         return
     shape = [int(x) for x in arguments]
     if len(shape) == 0:
         shape = [30]
     if len(shape) > 2:
-        await message.channel.send('Wrong dimensions!')
+        await send_yellow(message.channel, 'Wrong dimensions!')
         return
     url = message.attachments[0].url
     if url.endswith('.jpg') or url.endswith('.jpeg'):
-        await message.channel.send('Please do not send .jpg or .jpeg files')
+        await send_yellow(message.channel, 'Please do not send .jpg or .jpeg files')
         return
 
     try:
@@ -55,7 +59,7 @@ async def turn_to_emojis(message, arguments):
         for mess in image_parts:
             await message.channel.send(mess)
     except:
-        await message.channel.send('Error occured while processing image')
+        await send_yellow(message.channel, 'Error occured while processing image')
 
 
 @register_option
@@ -65,7 +69,7 @@ async def get_subtitles(message, arguments):
         lyrics_link = opensubtitles.get_subtitles(video_name)
         await message.channel.send(lyrics_link)
     except:
-        await message.channel.send('Error occured')
+        await send_yellow(message.channel, 'Error occured')
 
 
 @register_option
@@ -106,7 +110,7 @@ async def play(message, arguments):
 async def show_aliases(message, arguments):
     with open('resources/aliases.json', 'r') as file:
         data = json.load(file)
-        await message.channel.send(str(set([sound['alias'] for sound in data])))
+        await send_yellow(message.channel, set([sound['alias'] for sound in data]))
             
 
 @client.event
