@@ -6,6 +6,7 @@ import opensubtitles
 import asyncio
 import json
 import functools
+import os
 
 
 IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
@@ -18,6 +19,17 @@ register_option = lambda f: options.setdefault("$" + f.__name__, f)
 async def send_yellow(channel, text):
     await channel.send(f"```fix\n{ text }```")
 
+@register_option
+async def yt(message, arguments):
+    user_voice_channel = message.author.voice.channel
+    bot_voice_channel = discord.utils.get(client.voice_clients, guild=message.guild)
+    if user_voice_channel != None:
+        if bot_voice_channel == None:
+            bot_voice_channel = await user_voice_channel.connect()
+        os.system("rm -f /tmp/temp.opus")
+        os.system(f"yt-dlp -x -q -o /tmp/temp.opus {arguments[0]}")
+        bot_voice_channel.play(discord.FFmpegPCMAudio("/tmp/temp.opus"), after=lambda e: print('done', e))
+        
 
 @register_option
 async def help(message, arguments):
