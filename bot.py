@@ -7,29 +7,96 @@ import asyncio
 import json
 import functools
 import os
+import nightcore
 
 
 IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
-client = discord.Client()
+
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents=intents)
 
 options = {}
 register_option = lambda f: options.setdefault("$" + f.__name__, f)
 
+playlist = []
+gamer_mode = False
+is_playing = False
 
 async def send_yellow(channel, text):
     await channel.send(f"```fix\n{ text }```")
 
-@register_option
-async def yt(message, arguments):
+
+async def get_vc(message):
     user_voice_channel = message.author.voice.channel
     bot_voice_channel = discord.utils.get(client.voice_clients, guild=message.guild)
     if user_voice_channel != None:
         if bot_voice_channel == None:
             bot_voice_channel = await user_voice_channel.connect()
-        os.system("rm -f /tmp/temp.opus")
-        os.system(f"yt-dlp -x -q -o /tmp/temp.opus {arguments[0]}")
-        bot_voice_channel.play(discord.FFmpegPCMAudio("/tmp/temp.opus"), after=lambda e: print('done', e))
+    return bot_voice_channel
+
+
+@register_option
+async def fucking_chipmunks(message, arguments):
+    global gamer_mode
+    gamer_mode = not gamer_mode
+    await send_yellow(message.channel, f"Gamer mode is now {'ON' if gamer_mode else 'OFF'}")
+
+
+@register_option
+async def yt(message, arguments):
+    global playlist
+    global is_playing
+    bot_voice_channel = await get_vc(message)
+    playlist += [arguments[0]]
+    if not is_playing: 
+        await send_yellow(message.channel, "Playing now...")
+        await play_next(message)
+    else:
+        await send_yellow(message.channel, "Added to playlist...")
         
+
+async def play_next(message):
+    global playlist
+    global gamer_mode
+    global is_playing
+    is_playing = False
+
+    if playlist:
+        is_playing = True
+        bot_voice_channel = await get_vc(message)
+
+        # await send_yellow(message.channel, "Downloading...")
+        os.system("rm -f /tmp/temp.wav")
+        os.system(f"yt-dlp -x -q --audio-format wav -o /tmp/temp.wav {playlist[0]}")
+        
+        if gamer_mode:
+            # await send_yellow(message.channel, "G4M3R M0D3 3N4BL3D, C0NV3RT1NG...")
+            nc_audio = "/tmp/temp.wav" @ nightcore.Tones(3) @ nightcore.Percent(130)
+            nc_audio.export("/tmp/temp.wav")
+
+        # await send_yellow(message.channel, f"Playing {playlist[0]}")
+        playlist = playlist[1:]
+        bot_voice_channel.play(discord.FFmpegPCMAudio("/tmp/temp.wav"), after=lambda e: asyncio.run(play_next(message)))
+
+
+@register_option
+async def show_playlist(message, arguments):
+    await send_yellow(message.channel, playlist)
+
+
+@register_option
+async def skip(message, arguments):
+    bot_voice_channel = await get_vc(message)
+    bot_voice_channel.stop()
+
+
+@register_option
+async def stop(message, arguments):
+    global playlist
+    playlist = []
+    await skip(message, arguments)
+
 
 @register_option
 async def help(message, arguments):
@@ -132,6 +199,8 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    print(message)
+    print("CONTENT: " + message.content)
     for command in options:
         if message.content.startswith(command) and message.author != client.user:
             arguments = message.content[len(command)+1:].split()
