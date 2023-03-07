@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  bot:
+    container_name: "bot"
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/bot/

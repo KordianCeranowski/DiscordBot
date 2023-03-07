@@ -1,11 +1,16 @@
 # DiscordBot
 
-To run on Raspberry Pi, first install chromedriver using
+To run on Raspberry Pi
 ```
-sudo apt-get install chromium-chromedriver
+docker-compose up
 ```
 
-To use music playing features, install ffmpeg
+To stop on Raspberry Pi, run 
 ```
-sudo apt install ffmpeg yt-dlp
+docker-compose stop
+```
+
+To use music playing features when deploying without docker, install ffmpeg
+```
+sudo apt install ffmpeg
 ```
