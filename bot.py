@@ -9,8 +9,8 @@ import os
 import nightcore
 
 from time import localtime
+from PIL import Image
 
-IMG_NAME = '/home/pi/repos/DiscordBot/resources/temp.png'
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -133,30 +133,34 @@ async def cleanup(message, arguments):
 async def turn_to_emojis(message, arguments):
     def download(url_address):
         r = requests.get(url_address)
-        with open(IMG_NAME, 'wb') as outfile:
+        image_name = url_address.split('/')[-1]
+        image_path = f"resources/images/{image_name}"
+        with open(image_path, 'wb') as outfile:
             outfile.write(r.content)
+        return image_path
 
     if not message.attachments:
-        await send_yellow(message.channel, 'No attachment found!')
+        await send_yellow(message.channel, "No attachment found!")
         return
     shape = [int(x) for x in arguments]
     if len(shape) == 0:
         shape = [30]
     if len(shape) > 2:
-        await send_yellow(message.channel, 'Wrong dimensions!')
+        await send_yellow(message.channel, "Wrong dimensions!")
         return
     url = message.attachments[0].url
-    if url.endswith('.jpg') or url.endswith('.jpeg'):
-        await send_yellow(message.channel, 'Please do not send .jpg or .jpeg files')
-        return
 
     try:
-        download(url)
-        image_parts = painter.encode_image(IMG_NAME, shape)
+        downloaded_image = download(url)
+        if downloaded_image.split('.')[1] != "png":
+            await send_yellow(message.channel, f"Attempting conversion to png")
+            im = Image.open(downloaded_image)
+            im.save(downloaded_image.replace("jpg", "png").replace("jpeg", "png"))
+        image_parts = painter.encode_image(downloaded_image, shape)
         for mess in image_parts:
             await message.channel.send(mess)
     except Exception as error:
-        await send_yellow(message.channel, f"Error occured while processing image.\nError message:{error}")
+        await send_yellow(message.channel, f"Error occurred while processing image.\nError message:{error}")
 
 
 @register_option

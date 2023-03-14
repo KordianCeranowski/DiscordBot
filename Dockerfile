@@ -1,14 +1,14 @@
-FROM arm32v7/python:3.8-alpine
+FROM python:3.8-alpine
 
-WORKDIR /code
+WORKDIR /app
 
 RUN apk update && apk upgrade
-RUN apk add gcc g++ make zlib-dev libc-dev libffi-dev chromium-chromedriver ffmpeg
+RUN apk add gcc g++ make zlib-dev libc-dev libffi-dev chromium-chromedriver opus-dev openssl-dev ffmpeg
 
 COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 
-COPY . /code
+COPY . /app
 
 CMD ["python3", "bot.py"]
