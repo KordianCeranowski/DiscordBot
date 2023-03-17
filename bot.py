@@ -11,7 +11,6 @@ import nightcore
 from time import localtime
 from PIL import Image
 
-
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
@@ -59,6 +58,24 @@ async def yt(message, arguments):
         await send_yellow(message.channel, "Added to playlist...")
 
 
+async def download_from_youtube(url: str):
+    filepath: str = "/tmp/temp.wav"
+    if os.path.isfile(filepath):
+        os.system(f"rm -f {filepath}")
+
+    ydl_opts = {
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "wav",
+            "preferredquality": "192"
+        }],
+        "outtmpl": "/tmp/temp",
+        "format": "bestaudio/best",
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download(url)
+
+
 async def play_next(message):
     global playlist
     global gamer_mode
@@ -73,26 +90,14 @@ async def play_next(message):
     bot_voice_channel = await get_vc(message)
 
     # await send_yellow(message.channel, "Downloading...")
-    os.system("rm -f /tmp/temp.wav")
-
-    ydl_opts = {
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "wav",
-            "preferredquality": "192"
-        }],
-        "outtmpl": "/tmp/temp",
-        "format": "bestaudio/best",
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download(playlist[0])
+    await download_from_youtube(playlist[0])
 
     if gamer_mode:
-        # await send_yellow(message.channel, "G4M3R M0D3 3N4BL3D, C0NV3RT1NG...")
+        await send_yellow(message.channel, "G4M3R M0D3 3N4BL3D, C0NV3RT1NG...")
         nc_audio = "/tmp/temp.wav" @ nightcore.Tones(3) @ nightcore.Percent(130)
         nc_audio.export("/tmp/temp.wav")
 
-    # await send_yellow(message.channel, f"Playing {playlist[0]}")
+    await send_yellow(message.channel, f"Playing {playlist[0]}")
     playlist = playlist[1:]
     bot_voice_channel.play(discord.FFmpegPCMAudio("/tmp/temp.wav"), after=lambda e: asyncio.run(play_next(message)))
 
@@ -106,6 +111,7 @@ async def show_playlist(message, arguments):
 async def skip(message, arguments):
     bot_voice_channel = await get_vc(message)
     bot_voice_channel.stop()
+    await play_next(message)
 
 
 @register_option
